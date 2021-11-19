@@ -74,7 +74,7 @@ subBN (BigNumber d1 Negative) (BigNumber d2 Negative) = subBN (BigNumber d2 Posi
 subBN (BigNumber d1 Positive) (BigNumber d2 Negative) = somaBN (BigNumber d2 Positive) (BigNumber d1 Positive)
 subBN (BigNumber d1 Negative) (BigNumber d2 Positive) = somaBN (BigNumber d2 Negative) (BigNumber d1 Negative)
 subBN (BigNumber d1 Positive) (BigNumber d2 Positive)
-    | greatereqBNDigits d1 d2 = BigNumber (idkWhatToNameThis subBNAux d1 d2) Positive -- TODO: This positive is temporary
+    | greatereqBNDigits d1 d2 = BigNumber (idkWhatToNameThis subBNAux d1 d2) Positive
     | otherwise = BigNumber (idkWhatToNameThis subBNAux d2 d1) Negative
 
 subBNAux :: (Int, Int) -> (Int, Int) -> (Int, Int)
