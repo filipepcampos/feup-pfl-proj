@@ -23,12 +23,12 @@ prop_divBN a b
 main :: IO()
 main = do
     putStrLn "> scanout"
-    quickCheck prop_scanout
+    quickCheck (withMaxSuccess 50000 prop_scanout)
     putStrLn "> somaBN"
-    quickCheck prop_somaBN
+    quickCheck (withMaxSuccess 50000 prop_somaBN)
     putStrLn "> subBN"
-    quickCheck prop_subBN
+    quickCheck (withMaxSuccess 50000 prop_subBN)
     putStrLn "> mulBN"
-    quickCheck prop_mulBN
+    quickCheck (withMaxSuccess 50000 prop_mulBN)
     putStrLn "> divBN"
-    quickCheck prop_divBN
+    quickCheck (withMaxSuccess 50000 prop_divBN)
