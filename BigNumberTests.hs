@@ -14,6 +14,12 @@ prop_subBN a b = show (a - b) == BigNumber.output(subBN (scanner (show a)) (scan
 prop_mulBN :: Integer -> Integer -> Bool 
 prop_mulBN a b = show (a*b) == BigNumber.output(mulBN (scanner (show a)) (scanner (show b)))
 
+prop_divBN :: Integer -> Integer -> Bool 
+prop_divBN a b 
+    | a < 0 || b <= 0 = True 
+    | otherwise = show (a `div` b) == BigNumber.output(fst foo) && show (a `mod` b) == BigNumber.output(snd foo)
+    where foo = divBN (scanner (show a)) (scanner (show b))
+
 main :: IO()
 main = do
     putStrLn "> scanout"
@@ -24,3 +30,5 @@ main = do
     quickCheck prop_subBN
     putStrLn "> mulBN"
     quickCheck prop_mulBN
+    putStrLn "> divBN"
+    quickCheck prop_divBN
