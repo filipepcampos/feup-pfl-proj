@@ -57,31 +57,29 @@ output :: BigNumber -> String
 output (BigNumber digits sign) = if sign == Negative then '-' : string else string
     where string = reverse (map intToChar digits)
 
--- TODO: Remove the following message
--- I'm sorry for creating this monster. (Part of me wanted it to be a one-liner with lambdas, it would be glorious)
+operationWithCarry :: (Int -> Int -> Int -> (Int, Int)) -> BigNumberDigits -> BigNumberDigits -> Int -> BigNumberDigits
+operationWithCarry func [] [] c = [c | c /= 0]
+operationWithCarry func (d1:ds1) [] carry
+    | carry == 0 = d1:ds1
+    | otherwise = digit : operationWithCarry func [] ds1 new_carry
+    where (digit,new_carry) = func d1 0 carry
 
--- This function helps calculate any operation that requeries carry
--- For example, sum of [2,2] [9,1,1]. 
--- Firstly the numbers will be zipped (padding will be added): [(2,9), (2,1), (0,1)]
--- The scanl will start calculating:  func (0,0) (2,9) -> (11`mod`10 = 1 -> digit, 1 -> carry) 
---                                    func (_,1) (2,1) -> (2+1+1 = 4, 0)
---                                    func (_,0) (0,1) -> (1,0)
--- The list will look like this [(0,0), (1,1), (4,0), (1,0)] after removing the first element,
--- we take the 1st digit of each tuple [1, 4, 1]
-idkWhatToNameThis :: ((Int,Int) -> (Int, Int) -> (Int, Int)) -> BigNumberDigits -> BigNumberDigits -> BigNumberDigits
-idkWhatToNameThis func d1 d2 = removeLeadingZerosBN (map fst result ++ [last_carry]) -- Removing leading zeros is useless on (+) but this looks cleaner... what should we do?
-    where result = tail (scanl func (0,0) (zip (d1++padding) (d2++padding)))
-          last_carry = snd (last result)
-          padding = replicate (abs (length d1 - length d2)) 0
+operationWithCarry func [] (d2:ds2) carry
+    | carry == 0 = d2:ds2
+    | otherwise =  digit : operationWithCarry func [] ds2 new_carry
+    where (digit,new_carry)  = func 0 d2 carry
+
+operationWithCarry func (d1:ds1) (d2:ds2) carry = digit : operationWithCarry func ds1 ds2 new_carry
+    where (digit,new_carry) = func d1 d2 carry
 
 -- ====================================== 2.4 ====================================== 
 somaBN :: BigNumber -> BigNumber -> BigNumber
 somaBN (BigNumber a Positive) (BigNumber b Negative) = subBN (BigNumber a Positive) (BigNumber b Positive)
 somaBN (BigNumber a Negative) (BigNumber b Positive) = subBN (BigNumber b Positive) (BigNumber a Positive)
-somaBN (BigNumber d1 s1) (BigNumber d2 s2) = BigNumber (idkWhatToNameThis somaBNAux d1 d2) s1 -- Both numbers have same sign due to pattern matching
+somaBN (BigNumber d1 s1) (BigNumber d2 s2) = BigNumber (operationWithCarry somaOp d1 d2 0) s1 -- Both numbers have same sign due to pattern matching
 
-somaBNAux :: (Int, Int) -> (Int, Int) -> (Int, Int)
-somaBNAux (_,carry) (x,y) = ((x+y+carry) `mod` 10, (x+y+carry) `div` 10)
+somaOp :: Int -> Int -> Int -> (Int, Int)
+somaOp x y carry = ((x+y+carry) `mod` 10, (x+y+carry) `div` 10)
 
 
 -- ====================================== 2.5 ====================================== 
@@ -90,11 +88,11 @@ subBN (BigNumber d1 Negative) (BigNumber d2 Negative) = subBN (BigNumber d2 Posi
 subBN (BigNumber d1 Positive) (BigNumber d2 Negative) = somaBN (BigNumber d2 Positive) (BigNumber d1 Positive)
 subBN (BigNumber d1 Negative) (BigNumber d2 Positive) = somaBN (BigNumber d2 Negative) (BigNumber d1 Negative)
 subBN (BigNumber d1 Positive) (BigNumber d2 Positive)
-    | greatereqBNDigits d1 d2 = BigNumber (idkWhatToNameThis subBNAux d1 d2) Positive
-    | otherwise = BigNumber (idkWhatToNameThis subBNAux d2 d1) Negative
+    | greatereqBNDigits d1 d2 = BigNumber (removeLeadingZerosBN(operationWithCarry subOp d1 d2 0)) Positive
+    | otherwise = BigNumber (removeLeadingZerosBN(operationWithCarry subOp d2 d1 0)) Negative
 
-subBNAux :: (Int, Int) -> (Int, Int) -> (Int, Int)
-subBNAux (_, carry) (x, y) = ((x-y-carry) `mod` 10, if y+carry > x then 1 else 0)
+subOp :: Int -> Int -> Int -> (Int, Int)
+subOp x y carry = ((x-y-carry) `mod` 10, if y+carry > x then 1 else 0)
 
 -- ====================================== 2.6 ====================================== 
 mulBN :: BigNumber -> BigNumber -> BigNumber
@@ -104,10 +102,10 @@ mulBN (BigNumber d1 s1) (BigNumber d2 s2) = foldr1 somaBN [BigNumber (replicate 
     where sign = if s1 /= s2 then Negative else Positive
 
 mulBNDigitsbyInt :: BigNumberDigits -> Int -> BigNumberDigits  -- TODO: This is assuming unsigned Int!
-mulBNDigitsbyInt d n = idkWhatToNameThis mulBNAux d (replicate (length d) n)
+mulBNDigitsbyInt d n = operationWithCarry mulOp d (replicate (length d) n) 0
 
-mulBNAux :: (Int, Int) -> (Int, Int) -> (Int, Int)
-mulBNAux (_,carry) (x,y) = ((x*y+carry) `mod` 10, (x*y+carry) `div` 10)
+mulOp :: Int -> Int -> Int -> (Int, Int)
+mulOp x y carry = ((x*y+carry) `mod` 10, (x*y+carry) `div` 10)
 
 -- ====================================== 2.7 ====================================== 
 divBN :: BigNumber -> BigNumber -> (BigNumber, BigNumber)
@@ -131,4 +129,3 @@ divBNAux dividend_l dividend_r divisor quocient
     | greaterBNDigits divisor dividend_r = divBNAux (init dividend_l) (last dividend_l:dividend_r) divisor (0:quocient)
     | otherwise = divBNAux (init dividend_l) (last dividend_l : subNumber) divisor (m:quocient)
     where (subNumber, m) = smallDivide dividend_r divisor
-  
