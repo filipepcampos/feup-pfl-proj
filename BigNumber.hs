@@ -13,27 +13,26 @@ removeLeadingZerosBN l = if result /= [] then result else [0]
     where result = reverse (dropWhile (== 0) (reverse l))
 
 --   Utility functions
+zipWithDefaultValue :: [a] -> [a] -> a -> [(a,a)]
+zipWithDefaultValue l1 l2 def = zip lpadded1 lpadded2
+    where 
+          (len1, len2) = (length l1, length l2)
+          padding = replicate (abs (len1 - len2)) def
+          lpadded1 = if len1 > len2 then l1 else l1 ++ padding
+          lpadded2 = if len2 > len1 then l2 else l2 ++ padding
+
 greaterBNDigits :: BigNumberDigits -> BigNumberDigits -> Bool
-greaterBNDigits d1 d2 = if length x == length y then reverse x > reverse y else length x > length y -- TODO: These two could be merged 
-    where x = removeLeadingZerosBN d1 -- TODO: This is a bit ugly and inefficient
-          y = removeLeadingZerosBN d2
+greaterBNDigits d1 d2 = if diff /= [] then (fst (head diff)) > (snd (head diff)) else False
+    where diff = dropWhile (\(x, y) -> x == y) (reverse (zipWithDefaultValue d1 d2 0))
 
 greatereqBNDigits :: BigNumberDigits -> BigNumberDigits -> Bool
-greatereqBNDigits d1 d2 = if length x == length y then reverse x >= reverse y else length x > length y
-    where x = removeLeadingZerosBN d1
-          y = removeLeadingZerosBN d2
+greatereqBNDigits d1 d2 = (d1 == d2) || greaterBNDigits d1 d2
 
 smallereqBNDigits :: BigNumberDigits -> BigNumberDigits -> Bool
 smallereqBNDigits d1 d2 = not (greaterBNDigits d1 d2)
-    where x = removeLeadingZerosBN d1
-          y = removeLeadingZerosBN d2
 
 getBNDigits :: BigNumber -> BigNumberDigits
 getBNDigits (BigNumber d _) = d
-
-dig2posBN :: BigNumberDigits -> BigNumber
-dig2posBN d = BigNumber d Positive
-
 
 -- ====================================== 2.2 ====================================== 
 -- TODO: Throw error if chr is out of range ['0':'9']?
@@ -81,7 +80,6 @@ somaBN (BigNumber d1 s1) (BigNumber d2 s2) = BigNumber (operationWithCarry somaO
 somaOp :: Int -> Int -> Int -> (Int, Int)
 somaOp x y carry = ((x+y+carry) `mod` 10, (x+y+carry) `div` 10)
 
-
 -- ====================================== 2.5 ====================================== 
 subBN :: BigNumber -> BigNumber -> BigNumber
 subBN (BigNumber d1 Negative) (BigNumber d2 Negative) = subBN (BigNumber d2 Positive) (BigNumber d1 Positive)
@@ -108,21 +106,28 @@ mulOp :: Int -> Int -> Int -> (Int, Int)
 mulOp x y carry = ((x*y+carry) `mod` 10, (x*y+carry) `div` 10)
 
 -- ====================================== 2.7 ====================================== 
+subBNDigits :: BigNumberDigits -> BigNumberDigits -> BigNumberDigits -- Assuming positive numbers
+subBNDigits d1 d2 = getBNDigits (subBN (BigNumber d1 Positive) (BigNumber d2 Positive))
+-- TODO: Podem ser agrupados numa única função
+mulBNDigits :: BigNumberDigits -> BigNumberDigits -> BigNumberDigits -- Assuming positive numbers
+mulBNDigits d1 d2 = getBNDigits (mulBN (BigNumber d1 Positive) (BigNumber d2 Positive))
+
 divBN :: BigNumber -> BigNumber -> (BigNumber, BigNumber)
 divBN (BigNumber [0] Positive) (BigNumber _ Positive) = (BigNumber [0] Positive, BigNumber [0] Positive)
 divBN (BigNumber ds1 Positive) (BigNumber [1] Positive) = (BigNumber ds1 Positive, BigNumber [0] Positive)
-divBN (BigNumber ds1 Positive) (BigNumber d2 Positive) = divBNAux (init ds1) [last ds1] d2 []
+divBN (BigNumber ds1 Positive) (BigNumber d2 Positive) = (BigNumber (removeLeadingZerosBN d) Positive, BigNumber (removeLeadingZerosBN r) Positive)
+    where (d,r) = divBNAux (init ds1) [last ds1] d2 []
 
 smallDivide :: [Int] -> [Int] -> (BigNumberDigits, Int)
 smallDivide dividend divisor = (subbed_number, m)
       where
-        subbed_number = getBNDigits (subBN (dig2posBN dividend) (dig2posBN biggestMultiple))
-        (biggestMultiple, m) = last (takeWhile (\(x, y) -> smallereqBNDigits x dividend) [(getBNDigits (mulBN (dig2posBN divisor) (dig2posBN [i])), i) | i <- [1 .. 9]])
+        subbed_number = subBNDigits dividend biggestMultiple
+        (biggestMultiple, m) = last (takeWhile (\(x, y) -> smallereqBNDigits x dividend) [(mulBNDigits divisor [i], i) | i <- [1..9]])
 
-divBNAux :: BigNumberDigits -> BigNumberDigits -> BigNumberDigits -> BigNumberDigits -> (BigNumber, BigNumber)
+divBNAux :: BigNumberDigits -> BigNumberDigits -> BigNumberDigits -> BigNumberDigits -> (BigNumberDigits, BigNumberDigits)
 divBNAux [] dividend_r divisor quocient
-    | greaterBNDigits divisor dividend_r = (dig2posBN (removeLeadingZerosBN (0:quocient)), dig2posBN (removeLeadingZerosBN dividend_r))
-    | otherwise = (dig2posBN (removeLeadingZerosBN (m:quocient)), dig2posBN (removeLeadingZerosBN subNumber))
+    | greaterBNDigits divisor dividend_r = (0:quocient, dividend_r)
+    | otherwise = (m:quocient, subNumber)
     where (subNumber, m) = smallDivide dividend_r divisor
 
 divBNAux dividend_l dividend_r divisor quocient
