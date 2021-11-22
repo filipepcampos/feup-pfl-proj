@@ -115,7 +115,9 @@ mulBNDigits d1 d2 = getBNDigits (mulBN (BigNumber d1 Positive) (BigNumber d2 Pos
 divBN :: BigNumber -> BigNumber -> (BigNumber, BigNumber)
 divBN (BigNumber [0] Positive) (BigNumber _ Positive) = (BigNumber [0] Positive, BigNumber [0] Positive)
 divBN (BigNumber ds1 Positive) (BigNumber [1] Positive) = (BigNumber ds1 Positive, BigNumber [0] Positive)
-divBN (BigNumber ds1 Positive) (BigNumber d2 Positive) = (BigNumber (removeLeadingZerosBN d) Positive, BigNumber (removeLeadingZerosBN r) Positive)
+divBN (BigNumber ds1 Positive) (BigNumber d2 Positive)
+    | d2 == [0] = error("Division by 0")
+    | otherwise = (BigNumber (removeLeadingZerosBN d) Positive, BigNumber (removeLeadingZerosBN r) Positive)
     where (d,r) = divBNAux (init ds1) [last ds1] d2 []
 
 smallDivide :: [Int] -> [Int] -> (BigNumberDigits, Int)
@@ -134,3 +136,9 @@ divBNAux dividend_l dividend_r divisor quocient
     | greaterBNDigits divisor dividend_r = divBNAux (init dividend_l) (last dividend_l:dividend_r) divisor (0:quocient)
     | otherwise = divBNAux (init dividend_l) (last dividend_l : subNumber) divisor (m:quocient)
     where (subNumber, m) = smallDivide dividend_r divisor
+
+-- ======================================  5  ====================================== 
+safeDivBN :: BigNumber -> BigNumber -> Maybe (BigNumber, BigNumber)
+safeDivBN bn1 (BigNumber d2 s2)
+    | d2 == [0] = Nothing
+    | otherwise = Just (divBN bn1 (BigNumber d2 s2))
