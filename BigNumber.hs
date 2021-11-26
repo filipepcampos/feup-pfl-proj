@@ -15,18 +15,19 @@ removeLeadingZerosBN l = if result /= [] then result else [0]
 --   Utility functions
 zipWithDefaultValue :: [a] -> [a] -> a -> [(a,a)]
 zipWithDefaultValue l1 l2 def = zip lpadded1 lpadded2
-    where 
+    where
           (len1, len2) = (length l1, length l2)
           padding = replicate (abs (len1 - len2)) def
           lpadded1 = if len1 > len2 then l1 else l1 ++ padding
           lpadded2 = if len2 > len1 then l2 else l2 ++ padding
 
 greaterBNDigits :: BigNumberDigits -> BigNumberDigits -> Bool
-greaterBNDigits d1 d2 = if diff /= [] then (fst (head diff)) > (snd (head diff)) else False
-    where diff = dropWhile (\(x, y) -> x == y) (reverse (zipWithDefaultValue d1 d2 0))
+greaterBNDigits d1 d2 = diff /= [] && uncurry (>) (head diff)
+    where diff = dropWhile (uncurry (==)) (reverse (zipWithDefaultValue d1 d2 0))
 
 greatereqBNDigits :: BigNumberDigits -> BigNumberDigits -> Bool
-greatereqBNDigits d1 d2 = (d1 == d2) || greaterBNDigits d1 d2
+greatereqBNDigits d1 d2 = diff == [] && uncurry (>) (head diff)
+    where diff = dropWhile (uncurry (==)) (reverse (zipWithDefaultValue d1 d2 0))
 
 smallereqBNDigits :: BigNumberDigits -> BigNumberDigits -> Bool
 smallereqBNDigits d1 d2 = not (greaterBNDigits d1 d2)
@@ -72,15 +73,21 @@ operationWithCarry func (d1:ds1) (d2:ds2) carry = digit : operationWithCarry fun
     where (digit,new_carry) = func d1 d2 carry
 
 -- ====================================== 2.4 ====================================== 
+-- somaBN will handle only numbers with the same sign, and delegate operations 
+-- with different sign to subBN using Pattern Matching.
 somaBN :: BigNumber -> BigNumber -> BigNumber
 somaBN (BigNumber a Positive) (BigNumber b Negative) = subBN (BigNumber a Positive) (BigNumber b Positive)
 somaBN (BigNumber a Negative) (BigNumber b Positive) = subBN (BigNumber b Positive) (BigNumber a Positive)
 somaBN (BigNumber d1 s1) (BigNumber d2 s2) = BigNumber (operationWithCarry somaOp d1 d2 0) s1 -- Both numbers have same sign due to pattern matching
 
+-- Sums two digits (+carry), returning the correct digit (%10) and the resulting carry
 somaOp :: Int -> Int -> Int -> (Int, Int)
 somaOp x y carry = ((x+y+carry) `mod` 10, (x+y+carry) `div` 10)
 
 -- ====================================== 2.5 ====================================== 
+-- subBN will delegate operations to somaBN if the numbers have different sign
+-- the remaining cases will be reduced into a subtraction 
+-- between numbers A and B, A >= B.
 subBN :: BigNumber -> BigNumber -> BigNumber
 subBN (BigNumber d1 Negative) (BigNumber d2 Negative) = subBN (BigNumber d2 Positive) (BigNumber d1 Positive)
 subBN (BigNumber d1 Positive) (BigNumber d2 Negative) = somaBN (BigNumber d2 Positive) (BigNumber d1 Positive)
@@ -89,12 +96,13 @@ subBN (BigNumber d1 Positive) (BigNumber d2 Positive)
     | greatereqBNDigits d1 d2 = BigNumber (removeLeadingZerosBN(operationWithCarry subOp d1 d2 0)) Positive
     | otherwise = BigNumber (removeLeadingZerosBN(operationWithCarry subOp d2 d1 0)) Negative
 
+-- Subtracts to digits (+carry), and returns the correct digit (%10) and the resulting carry
 subOp :: Int -> Int -> Int -> (Int, Int)
 subOp x y carry = ((x-y-carry) `mod` 10, if y+carry > x then 1 else 0)
 
 -- ====================================== 2.6 ====================================== 
 mulBN :: BigNumber -> BigNumber -> BigNumber
-mulBN (BigNumber [0] _) (BigNumber _ _) = BigNumber [0] Positive -- TODO: Say this is for efficiency reasons, in reality is to avoid 0*(-1) = -0. Or find a cleaner alternative :shrug:
+mulBN (BigNumber [0] _) (BigNumber _ _) = BigNumber [0] Positive -- Small optimization, there's no need to calculate multiplications by 0
 mulBN (BigNumber _ _) (BigNumber [0] _) = BigNumber [0] Positive
 mulBN (BigNumber d1 s1) (BigNumber d2 s2) = foldr1 somaBN [BigNumber (replicate i 0 ++ mulBNDigitsbyInt d1 x) sign | (x,i) <- zip d2 [0..]]
     where sign = if s1 /= s2 then Negative else Positive
@@ -116,7 +124,7 @@ divBN :: BigNumber -> BigNumber -> (BigNumber, BigNumber)
 divBN (BigNumber [0] Positive) (BigNumber _ Positive) = (BigNumber [0] Positive, BigNumber [0] Positive)
 divBN (BigNumber ds1 Positive) (BigNumber [1] Positive) = (BigNumber ds1 Positive, BigNumber [0] Positive)
 divBN (BigNumber ds1 Positive) (BigNumber d2 Positive)
-    | d2 == [0] = error("Division by 0")
+    | d2 == [0] = error "Division by 0"
     | otherwise = (BigNumber (removeLeadingZerosBN d) Positive, BigNumber (removeLeadingZerosBN r) Positive)
     where (d,r) = divBNAux (init ds1) [last ds1] d2 []
 
