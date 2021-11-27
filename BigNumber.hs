@@ -53,7 +53,7 @@ decDigitToInt c -- digitToInt accepts hex digits [a,b,c,d,e,f] which we don't wa
 scanner :: String -> BigNumber
 scanner [] = error "invalid string"
 scanner (h:str)
-    | h == '-'  = BigNumber (reverse (map decDigitToInt str))     Negative
+    | h == '-' && not (null str)  = BigNumber (reverse (map decDigitToInt str)) Negative
     | otherwise = BigNumber (reverse (map decDigitToInt (h:str))) Positive
 
 
@@ -139,9 +139,11 @@ mulOp :: Int -> Int -> Int -> (Int, Int)
 mulOp x y carry = ((x*y+carry) `mod` 10, (x*y+carry) `div` 10)
 
 -- ====================================== 2.7 ====================================== 
+
+-- Utility functions that take BigNumberDigits instead of BigNumbers
 subBNDigits :: BigNumberDigits -> BigNumberDigits -> BigNumberDigits -- Assuming positive numbers
 subBNDigits d1 d2 = getBNDigits (subBN (BigNumber d1 Positive) (BigNumber d2 Positive))
--- TODO: Podem ser agrupados numa única função
+
 mulBNDigits :: BigNumberDigits -> BigNumberDigits -> BigNumberDigits -- Assuming positive numbers
 mulBNDigits d1 d2 = getBNDigits (mulBN (BigNumber d1 Positive) (BigNumber d2 Positive))
 
@@ -152,6 +154,8 @@ divBN (BigNumber ds1 Positive) (BigNumber [1] Positive) = (BigNumber ds1 Positiv
 divBN (BigNumber ds1 Positive) (BigNumber d2 Positive) = (BigNumber (removeLeadingZerosBN d) Positive, BigNumber (removeLeadingZerosBN r) Positive)
     where (d,r) = divBNAux (init ds1) [last ds1] d2 []
 
+-- Take largest multiple of divisor (by multiplying from 1 to 9) that fits in dividend
+-- Returns the dividend - largestMultiple and the multiplier.
 smallDivide :: [Int] -> [Int] -> (BigNumberDigits, Int)
 smallDivide dividend divisor = (subbed_number, m)
       where
