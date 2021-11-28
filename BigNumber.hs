@@ -1,4 +1,4 @@
-module BigNumber(scanner,output,somaBN,subBN,mulBN,divBN,safeDivBN) where -- TODO Change this
+module BigNumber(BigNumber(..),BigNumberDigits,BigNumberSign(..),scanner,output,somaBN,subBN,mulBN,divBN,safeDivBN,decBN,indexBN) where
 import Data.Char(digitToInt,ord,chr,isDigit)
 
 -- ====================================== 2.1 ====================================== 
@@ -9,7 +9,7 @@ data BigNumber = BigNumber BigNumberDigits  BigNumberSign deriving (Show)
 -- =============================== Utility Functions =============================== 
 
 -- Remove leading zeros from BigNumberDigits, e.g 000010 ([0,1,0,0,0,0]) -> 10 ([0,1])
-removeLeadingZerosBN :: BigNumberDigits -> BigNumberDigits -- TODO: I think this could be more efficient
+removeLeadingZerosBN :: BigNumberDigits -> BigNumberDigits
 removeLeadingZerosBN [] = []
 removeLeadingZerosBN l = if result /= [] then result else [0]
     where result = reverse (dropWhile (== 0) (reverse l))
@@ -68,7 +68,6 @@ output :: BigNumber -> String
 output (BigNumber digits sign) = if sign == Negative then '-' : string else string
     where string = reverse (map intToChar digits)
 
--- TODO: Make this description better
 -- This function takes as an argument a
 --      - function (Int -> Int -> Int -> (Int, Int)) that takes two digits and a carry, returning a digit and a carry
 --          E.g for 9 + 5 the function would take (9 -> 5 -> 0) = (9+5 `mod` 10 = 4, 9+5 `div` 10 = 1)
@@ -129,7 +128,7 @@ mulBN (BigNumber _ _) (BigNumber [0] _) = BigNumber [0] Positive
 mulBN (BigNumber d1 s1) (BigNumber d2 s2) = foldr1 somaBN [BigNumber (replicate i 0 ++ mulBNDigitsbyInt d1 x) sign | (x,i) <- zip d2 [0..]]
     where sign = if s1 /= s2 then Negative else Positive
 
--- Multiply a BigNumber's digits byte a single unsigned Int. TODO: Maybe add a check to make sure is unsigned?
+-- Multiply a BigNumber's digits byte a single unsigned Int.
 mulBNDigitsbyInt :: BigNumberDigits -> Int -> BigNumberDigits
 mulBNDigitsbyInt d n = operationWithCarry mulOp d (replicate (length d) n) 0
 
@@ -177,3 +176,12 @@ safeDivBN :: BigNumber -> BigNumber -> Maybe (BigNumber, BigNumber)
 safeDivBN bn1 (BigNumber d2 s2)
     | d2 == [0] = Nothing
     | otherwise = Just (divBN bn1 (BigNumber d2 s2))
+
+-- ==================================  Utility  ====================================== 
+decBN :: BigNumber -> BigNumber
+decBN a = subBN a (BigNumber [1] Positive)
+
+indexBN :: [a] -> BigNumber -> a
+indexBN [] _ = error "Empty list"
+indexBN (x:_) (BigNumber [0] Positive) = x
+indexBN (_:xs) index = indexBN xs (decBN index)
