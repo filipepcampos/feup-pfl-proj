@@ -1,5 +1,4 @@
-{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
-module BigNumber where -- TODO Change this
+module BigNumber(scanner,output,somaBN,subBN,mulBN,divBN,safeDivBN) where -- TODO Change this
 import Data.Char(digitToInt,ord,chr,isDigit)
 
 -- ====================================== 2.1 ====================================== 
