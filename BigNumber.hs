@@ -147,8 +147,8 @@ mulBNDigits :: BigNumberDigits -> BigNumberDigits -> BigNumberDigits -- Assuming
 mulBNDigits d1 d2 = getBNDigits (mulBN (BigNumber d1 Positive) (BigNumber d2 Positive))
 
 divBN :: BigNumber -> BigNumber -> (BigNumber, BigNumber)
-divBN (BigNumber [0] Positive) (BigNumber _ Positive) = (BigNumber [0] Positive, BigNumber [0] Positive)
 divBN (BigNumber _ Positive) (BigNumber [0] Positive) = error "Division by 0"
+divBN (BigNumber [0] Positive) (BigNumber _ Positive) = (BigNumber [0] Positive, BigNumber [0] Positive)
 divBN (BigNumber ds1 Positive) (BigNumber [1] Positive) = (BigNumber ds1 Positive, BigNumber [0] Positive)
 divBN (BigNumber ds1 Positive) (BigNumber d2 Positive) = (BigNumber (removeLeadingZerosBN d) Positive, BigNumber (removeLeadingZerosBN r) Positive)
     where (d,r) = divBNAux (init ds1) [last ds1] d2 []
