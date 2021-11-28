@@ -78,7 +78,7 @@ operationWithCarry :: (Int -> Int -> Int -> (Int, Int)) -> BigNumberDigits -> Bi
 operationWithCarry func [] [] c = [c | c /= 0] -- Return [carry] if it's different than 0
 operationWithCarry func (d1:ds1) [] carry
     | carry == 0 = d1:ds1 -- If carry is 0 then the number won't be changed anymore.
-    | otherwise = digit : operationWithCarry func [] ds1 new_carry
+    | otherwise = digit : operationWithCarry func ds1 [] new_carry
     where (digit,new_carry) = func d1 0 carry
 
 operationWithCarry func [] (d2:ds2) carry
