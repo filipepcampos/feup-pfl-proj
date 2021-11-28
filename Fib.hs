@@ -14,8 +14,8 @@ fibRec n  -- Fb(n) = Fb(n-1) + Fb(n-2)
 
 -- ====================================== 1.2 ====================================== 
 ---- Dynamic Programming Fibonacci Function
-fibLista :: (Integral a) => Int -> a
-fibLista n = fibListaAux n !! n
+fibLista :: (Integral a) => (Integral a) => a -> a
+fibLista n = fibListaAux (fromIntegral n) !! fromIntegral n
 
 -- Auxiliary Function that obtains a list with the first n fibonacci sequence numbers
 fibListaAux :: (Integral a) => Int -> [a]
@@ -26,8 +26,8 @@ fibListaAux n = l ++ [(l !! (n-1)) + (l !! (n-2))]  -- Append the sum of the las
 
 -- ====================================== 1.3 ====================================== 
 ---- Infinite List Fibonacci Function
-fibListaInfinita :: (Integral a) => Int -> a
-fibListaInfinita n = dp !! n
+fibListaInfinita :: (Integral a) => a -> a
+fibListaInfinita n = dp !! fromIntegral n
     where dp = 0 : 1 : zipWith (+) dp (tail dp)  -- Zip a list with with the same list without the first element and 
                                                  -- calculate the sum of the elements with the same index infinitely
 
