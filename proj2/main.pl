@@ -54,22 +54,13 @@ get_player(game_state(_, Player), Player).
 % Return the X Y of the given position
 decompose_position(position(X,Y), X, Y).
 
-% get_position_X(+Position, -X)
-% Returns the X of the given Position
-get_position_X(position(X,_), X).
-
-% get_position_Y(+Position, -Y)
-% Returns the Y of the given Position
-get_position_Y(position(_,Y), Y).
-
 % decompose_play(+Move, -Piece, - Destination)
 % Returns the relevant positions of the Move
 decompose_play(play(Piece, Destination), Piece, Destination).
 
 % get_board_position(+Board, +Position, -Value)
 get_board_position(Board, Position, Value) :-
-    get_position_X(Position, X),
-    get_position_Y(Position, Y),
+    decompose_position(Position, X, Y),
     length(Board, LenY),
 
     LenYMinus1 is LenY - 1, 
@@ -89,8 +80,7 @@ valid_position(Board, Position) :-
 %neighbours(+Piece, -ListOfPositions)
 % Returns a list with the position of the neighbours of the given Piece
 neighbours(Piece, [P1,P2,P3,P4,P5,P6,P7,P8]) :-
-    get_position_X(Piece, X),
-    get_position_Y(Piece, Y),
+    decompose_position(Piece, X, Y),
     XP1 is X+1,
     XP2 is X+2,
     XM1 is X-1,
