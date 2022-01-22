@@ -2,13 +2,15 @@
 :- consult('interface.pl').
 :- consult('logic.pl').
 
-play_game :-
+play :-
     repeat,
+    not(play_game).
+
+play_game :-
     display_menu(PlayerType1, PlayerType2),
     initial_state(GameState),
     display_game(GameState),
-    game_cycle(GameState, PlayerType1, PlayerType2),
-    fail.
+    game_cycle(GameState, PlayerType1, PlayerType2).
 
 game_cycle(GameState, _, _):-
     game_over(GameState, Winner), !,
@@ -34,7 +36,8 @@ choose_move(GameState, human, Move):-
 
 choose_move(GameState, computer-Level, Move) :-
     valid_moves(GameState, Moves),
-    choose_move(Level, GameState, Moves, Move).
+    choose_move(Level, GameState, Moves, Move),
+    write_move(Move).
     
 valid_moves(GameState, Moves) :-
     findall(Move, valid_move(GameState, Move), Moves).
@@ -42,8 +45,29 @@ valid_moves(GameState, Moves) :-
 choose_move(1, _GameState, Moves, Move):-
     random_select(Move, Moves, _Rest).
 
-% choose_move(2, GameState, Moves, Move):-
-%     setof(Value-Mv, NewState^( member(Mv, Moves),
-%     move(GameState, Mv, NewState),
-%     evaluate_board(NewState, Value) ), [_V-Move|_]).
-% % evaluate_board assumes lower value is better
+%choose_move(2, GameState, Moves, Move):-
+%    setof(Value-Mv, NewState^( member(Mv, Moves),
+%                                move(GameState, Mv, NewState),
+%                                value(NewState, Value) 
+%                            ), Results),
+%    keyclumps(Results, Clumps),
+%    head(Clumps, BestPossibleMoves),  % Get all the moves with minimum key (Value)
+%    random_select(BestValue-Move, BestPossibleMoves, _Rest), % From all the best moves (that yield the same value), choose a random one.
+%    write(BestValue),
+%    write('\n').
+
+choose_move(2, GameState, Moves, Move):-
+    setof(Value-Mv, NewState^( member(Mv, Moves),
+                                move(GameState, Mv, NewState),
+                                value(NewState, Value) 
+                            ), Results),
+    write(Results),
+    head(Results, _V-Move).
+                        
+
+mvvalue(GameState, Moves, Move, Value) :-
+    member(Move, Moves),
+    move(GameState, Move, NewState),
+    display_game(GameState),
+    display_game(NewState),
+    value(NewState, Value).

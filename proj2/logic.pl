@@ -3,6 +3,17 @@
 
 %initial_state(-GameState)
 %Returns the initial board that will be used to play the game
+debug_state(game_state([
+[0,0,2,2,2,2,2,2,2],
+[0,2,2,2,2,2,2,2,2],
+[2,2,0,0,0,0,0,0,0],
+[0,2,0,0,0,0,0,0,0],
+[0,0,0,0,0,0,0,0,0],
+[0,1,0,0,0,0,0,0,0],
+[0,1,0,0,0,0,0,0,0],
+[0,1,1,1,1,1,1,1,1],
+[0,1,1,1,1,1,1,1,1]], 2)).
+
 initial_state(
     game_state([
     [2, 2, 2, 2, 2, 2, 2, 2, 2],
@@ -130,9 +141,9 @@ neighbours(Piece, [P1,P2,P3,P4,P5,P6,P7,P8]) :-
 %     remove_invalid_positions(Board, Neighbours, ListOfPositions).
 
 valid_position_for_piece(game_state(Board, Player), Piece, Destination) :-
+    valid_position(Board, Destination),
     neighbours(Piece, Neighbours),
-    member(Destination, Neighbours),
-    valid_position(Board, Destination).
+    member(Destination, Neighbours).
 
 valid_position_for_piece(game_state(Board, Player), Piece, Destination) :-
     valid_position(Board, Destination),
@@ -192,7 +203,22 @@ move(game_state(Board, Player), move(Piece, Destination), game_state(NewBoard, N
 
 %get_player_pieces_positions(Board, Player, ListOfPositions) :-
 
-debug(NewState) :-
-    initial_state(State),
-    move(State, play(position(0,7),position(1,5)), NewState),
-    write(NewState).
+% value(+GameState, -Value)
+value(game_state(Board, Player), Value) :-
+    setof(Piece, get_board_position(Board, Piece, Player), Pieces),
+    calculate_value(Pieces, Player, 0, Value).
+
+piece_value(Piece, 1, PieceValue) :-
+    decompose_position(Piece, _, Row),
+    PieceValue is Row.
+
+piece_value(Piece, 2, PieceValue) :-
+    decompose_position(Piece, _, Row),
+    PieceValue is 8 - Row.
+
+calculate_value([], _, OutputValue, OutputValue).
+
+calculate_value([H | T], Player, CurrentValue, OutputValue) :-
+    piece_value(H, Player, PieceValue),
+    NewValue is CurrentValue + PieceValue,
+    calculate_value(T, Player, NewValue, OutputValue).

@@ -6,6 +6,7 @@ display_menu(PlayerType1, PlayerType2) :-
     display_authors,
     display_options,
     get_option(Option),
+    !,
     parse_option(Option, PlayerType1, PlayerType2).
 
 display_title :-
@@ -41,9 +42,9 @@ get_option(Option) :-
 
 % parse_option(+Option, -PlayerType1, -PlayerType2)
 parse_option(1, human, human).
-parse_option(2, human, computer-1).
+parse_option(2, human, computer-2).
 parse_option(3, computer-1, human).
-parse_option(4, computer-1, computer-1).
+parse_option(4, computer-2, computer-2).
 
 get_move(move(position(PieceColumn, PieceRow), position(DestinationColumn, DestinationRow))) :-
     write('Choose Move:\n'),
@@ -63,6 +64,18 @@ get_position(Column-Row) :-
     skip_line,
     Row is RowCode - 49, % -48 - 1
     between(0, 8, Row).
+
+write_move(move(position(PieceColumn, PieceRow), position(DestinationColumn, DestinationRow))) :-
+    write_position(PieceColumn-PieceRow),
+    write(' to '),
+    write_position(DestinationColumn-DestinationRow),
+    write('\n\n').
+
+write_position(Column-Row) :-
+    ColumnCode is Column + 97,
+    RowCode is Row + 49,
+    put_code(ColumnCode),
+    put_code(RowCode).
 
 display_game(game_state(Board, Player)) :-
     display_header,
@@ -95,7 +108,6 @@ display_player(Player) :-
 
 % congratulate(+Winner)
 congratulate(Winner) :-
-    write('Congratulations, you\'re smarter than an idiot!\n'),
-    write('This message is for you,'),
+    write('\n\nCongratulations!\nPlayer '),
     write(Winner),
-    write('.\n').
+    write(' wins!\n').
