@@ -1,3 +1,4 @@
+:-use_module(library(random)).
 :- consult('interface.pl').
 :- consult('logic.pl').
 
@@ -31,12 +32,12 @@ choose_move(GameState, human, Move):-
     get_move(Move),
     valid_move(GameState, Move).
 
-%choose_move(GameState, computer-Level, Move) :-
-%    valid_moves(GameState, Moves),
-%    choose_move(Level, GameState, Moves, Move).
+choose_move(GameState, computer-Level, Move) :-
+    valid_moves(GameState, Moves),
+    choose_move(Level, GameState, Moves, Move).
     
 valid_moves(GameState, Moves) :-
-    findall(Move, valid_moves(GameState, Move), Moves).
+    findall(Move, valid_move(GameState, Move), Moves).
 
 choose_move(1, _GameState, Moves, Move):-
     random_select(Move, Moves, _Rest).

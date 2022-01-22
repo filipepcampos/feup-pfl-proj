@@ -1,33 +1,34 @@
 :-use_module(library(lists)).
 :-use_module(library(between)).
 
-% init_state(-GameState)
-% Returns the initial board that will be used to play the game
-% initial_state(
-%     game_state([
-%     [2, 2, 2, 2, 2, 2, 2, 2, 2],
-%     [2, 2, 2, 2, 2, 2, 2, 2, 2],
-%     [0, 0, 0, 0, 0, 0, 0, 0, 0],
-%     [0, 0, 0, 0, 0, 0, 0, 0, 0],
-%     [0, 0, 0, 0, 0, 0, 0, 0, 0],
-%     [0, 0, 0, 0, 0, 0, 0, 0, 0],
-%     [0, 0, 0, 0, 0, 0, 0, 0, 0],
-%     [1, 1, 1, 1, 1, 1, 1, 1, 1],
-%     [1, 1, 1, 1, 1, 1, 1, 1, 1]
-% ], 1)).
-
+%initial_state(-GameState)
+%Returns the initial board that will be used to play the game
 initial_state(
     game_state([
-    [1, 1, 1, 0, 1, 1, 1, 1, 1],
+    [2, 2, 2, 2, 2, 2, 2, 2, 2],
+    [2, 2, 2, 2, 2, 2, 2, 2, 2],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
     [1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [0, 0, 0, 0, 1, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 2, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [2, 2, 2, 2, 2, 2, 2, 0, 2],
-    [2, 2, 2, 2, 2, 2, 2, 2, 2]
+    [1, 1, 1, 1, 1, 1, 1, 1, 1]
 ], 1)).
+
+% TODO: Remove
+% initial_state(
+%     game_state([
+%     [1, 1, 1, 0, 1, 1, 1, 1, 1],
+%     [1, 1, 1, 1, 1, 1, 1, 1, 1],
+%     [0, 0, 0, 0, 1, 0, 0, 0, 0],
+%     [0, 0, 0, 0, 0, 0, 0, 0, 0],
+%     [0, 0, 0, 0, 0, 0, 0, 0, 0],
+%     [0, 0, 0, 0, 0, 0, 2, 0, 0],
+%     [0, 0, 0, 0, 0, 0, 0, 0, 0],
+%     [2, 2, 2, 2, 2, 2, 2, 0, 2],
+%     [2, 2, 2, 2, 2, 2, 2, 2, 2]
+% ], 1)).
 
 
 % game_over(+GameState, -Winner)
@@ -87,8 +88,7 @@ get_board_position(Board, Position, Value) :-
 
 % valid_position(+Board, +Position)
 valid_position(Board, Position) :- 
-    get_board_position(Board, Position, Value),
-    Value =:= 0.
+    get_board_position(Board, Position, 0).
 
 %neighbours(+Piece, -ListOfPositions)
 % Returns a list with the position of the neighbours of the given Piece
@@ -129,10 +129,30 @@ neighbours(Piece, [P1,P2,P3,P4,P5,P6,P7,P8]) :-
 %     member(PossibleMove, Neighbours),
 %     remove_invalid_positions(Board, Neighbours, ListOfPositions).
 
-valid_position_for_piece(Board, Piece, Destination) :-
+valid_position_for_piece(game_state(Board, Player), Piece, Destination) :-
     neighbours(Piece, Neighbours),
     member(Destination, Neighbours),
     valid_position(Board, Destination).
+
+valid_position_for_piece(game_state(Board, Player), Piece, Destination) :-
+    valid_position(Board, Destination),
+    valid_position_with_jump(game_state(Board, Player), Piece, Destination, []).
+
+% Terminate the jumping sequence by moving onto a empty Destination
+valid_position_with_jump(game_state(Board, Player), Piece, Destination, Visited) :-
+    neighbours(Piece, Neighbours),
+    member(Destination, Neighbours). % Check if destination is a neighbour of the last piece
+
+not(X):- X, !, fail.
+not(_X).
+
+valid_position_with_jump(game_state(Board, Player), Piece, Destination, Visited) :-
+    neighbours(Piece, Neighbours),
+    member(IntermediatePiece, Neighbours), % For each piece neighboring the current Piece
+    not(member(IntermediatePiece, Visited)), % Avoid infinite recursion
+    switch_player(Player, Opponent),
+    get_board_position(Board, IntermediatePiece, Opponent), % IntermediatePiece is an oppponent's piece
+    valid_position_with_jump(game_state(Board, Player), IntermediatePiece, Destination, [IntermediatePiece|Visited]).
 
 isNotEmpty([_|_]).
 
@@ -142,7 +162,7 @@ isNotEmpty([_|_]).
 %   concatenar ao resultado
 valid_move(game_state(Board, Player), move(Piece, Destination)) :-
     get_board_position(Board, Piece, Player),
-    valid_position_for_piece(Board, Piece, Destination).
+    valid_position_for_piece(game_state(Board, Player), Piece, Destination).
 
 %validate_play(game_state(Board, Player), play(Piece, Destination)) :-
 
