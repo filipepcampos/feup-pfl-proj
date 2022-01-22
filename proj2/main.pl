@@ -64,4 +64,4 @@ choose_move(2, GameState, Moves, Move):-
                             ), Results),
     keyclumps(Results, Clumps), % Group up all possible moves by their key (Value)
     head(Clumps, BestPossibleMoves),  % Get all the moves with minimum key (Minimum Value)
-    random_select(BestValue-Move, BestPossibleMoves, _Rest). % From all the best moves (that yield the same value), choose a random one.
+    random_select(_-Move, BestPossibleMoves, _Rest). % From all the best moves (that yield the same value), choose a random one.

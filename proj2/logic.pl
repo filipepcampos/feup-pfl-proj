@@ -117,7 +117,7 @@ valid_position_for_piece(game_state(Board, Player), Piece, Destination) :-
 
 % valid_position_for_piece_without_jump(+GameState, +Piece, +Destination)
 % Check if the given Piece can be moved to the Destination position, without using the mechanic of jumping on another piece
-valid_position_for_piece_without_jump(game_state(Board, Player), Piece, Destination) :-
+valid_position_for_piece_without_jump(game_state(Board, _), Piece, Destination) :-
     valid_position(Board, Destination),
     neighbours(Piece, Neighbours),
     member(Destination, Neighbours).
@@ -127,7 +127,7 @@ valid_position_for_piece_without_jump(game_state(Board, Player), Piece, Destinat
 %  Check if the given Piece can be moved to the Destination position by jumping on intermediate pieces.
 
 % Terminate the jumping sequence by moving onto an empty Destination
-valid_position_with_jump(game_state(Board, Player), Piece, Destination, Visited) :-
+valid_position_with_jump(game_state(_, _), Piece, Destination, _) :-
     neighbours(Piece, Neighbours),
     member(Destination, Neighbours). % Check if destination is a neighbour of the last piece
 
