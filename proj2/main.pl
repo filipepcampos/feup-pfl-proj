@@ -34,9 +34,10 @@ choose_move(GameState, human, Move):-
     get_move(Move),
     valid_move(GameState, Move).
 
+% choose_move(+GameState, +computer-AILevel, -Move)
 choose_move(GameState, computer-3, Move) :-
     valid_moves(GameState, Moves),
-    choose_move(Level, GameState, Moves, Move),
+    choose_move(2, GameState, Moves, Move), % Level 3 uses the same algorithm as level 2 but with a more complex moves list
     write_move(Move).
 
 choose_move(GameState, computer-Level, Move) :-
@@ -44,12 +45,15 @@ choose_move(GameState, computer-Level, Move) :-
     choose_move(Level, GameState, Moves, Move),
     write_move(Move).
     
+% valid_moves(+GameState, -Moves)
 valid_moves(GameState, Moves) :-
     findall(Move, valid_move(GameState, Move), Moves).
 
+% valid_moves_without_jump(+GameState, -Moves)
 valid_moves_without_jump(GameState, Moves) :-
     findall(Move, valid_move_without_jump(GameState, Move), Moves).
 
+% choose_move(+AILevel, +GameState, +Moves, -Move)
 choose_move(1, _GameState, Moves, Move):-
     random_select(Move, Moves, _Rest).
 
@@ -58,9 +62,6 @@ choose_move(2, GameState, Moves, Move):-
                                 move(GameState, Mv, NewState),
                                 value(NewState, Value) 
                             ), Results),
-    keyclumps(Results, Clumps),
-    head(Clumps, BestPossibleMoves),  % Get all the moves with minimum key (Value)
+    keyclumps(Results, Clumps), % Group up all possible moves by their key (Value)
+    head(Clumps, BestPossibleMoves),  % Get all the moves with minimum key (Minimum Value)
     random_select(BestValue-Move, BestPossibleMoves, _Rest). % From all the best moves (that yield the same value), choose a random one.
-
-choose_move(3, GameState, Moves, Move):-
-    choose_move(2, GameState, Moves, Move). % Level 3 uses the same algorithm as level 2 but with a more complex moves list

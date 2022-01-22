@@ -1,5 +1,6 @@
 :-use_module(library(between)).
 
+% display_menu(+PlayerType1, +PlayerType2)
 display_menu(PlayerType1, PlayerType2) :-
     repeat,
     display_title,
@@ -29,6 +30,8 @@ display_options :-
     write('                 4. Computer vs Computer\n\n'),
     write('                 0. Exit\n').
 
+% get_option(-Option)
+% Get menu option from stdin
 get_option(Option) :-
     write('Write you option:\n > '),
     get_code(CharCode),
@@ -46,6 +49,8 @@ parse_option(2, human, computer-2).
 parse_option(3, computer-2, human).
 parse_option(4, computer-2, computer-2).
 
+% get_move(-Move)
+% Get a move from stdin
 get_move(move(position(PieceColumn, PieceRow), position(DestinationColumn, DestinationRow))) :-
     write('Choose Move:\n'),
     write('  Piece:\n'),
@@ -53,6 +58,8 @@ get_move(move(position(PieceColumn, PieceRow), position(DestinationColumn, Desti
     write('  Destination:\n'),
     get_position(DestinationColumn-DestinationRow).
 
+% get_position(-Column-Row)
+% Get a position (Column-Row pair) from stdin
 get_position(Column-Row) :- 
     write('  > '),
     get_code(ColumnCode),
@@ -65,18 +72,21 @@ get_position(Column-Row) :-
     Row is RowCode - 49, % -48 - 1
     between(0, 8, Row).
 
+% write_move(+Move)
 write_move(move(position(PieceColumn, PieceRow), position(DestinationColumn, DestinationRow))) :-
     write_position(PieceColumn-PieceRow),
     write(' to '),
     write_position(DestinationColumn-DestinationRow),
     write('\n\n').
 
+% write_position(+Column-Row)
 write_position(Column-Row) :-
     ColumnCode is Column + 97,
     RowCode is Row + 49,
     put_code(ColumnCode),
     put_code(RowCode).
 
+% display_game(+GameState)
 display_game(game_state(Board, Player)) :-
     display_header,
     display_board(Board, 1),
@@ -86,12 +96,14 @@ display_header :-
     write('    a b c d e f g h i\n'),
     write('  -------------------\n').
 
+% display_row(+Row)
 display_row([]).
 display_row([H | T]) :-
     write(H),
     write(' '),
     display_row(T).
     
+% display_board(+Board)
 display_board([], _).
 display_board([ Row | RestOfBoard], RowNumber) :-
     write(RowNumber),
@@ -101,6 +113,7 @@ display_board([ Row | RestOfBoard], RowNumber) :-
     NewRowNumber is RowNumber + 1,
     display_board(RestOfBoard, NewRowNumber).
 
+% display_player(+Player)
 display_player(Player) :-
     write('\nPlayer '),
     write(Player),

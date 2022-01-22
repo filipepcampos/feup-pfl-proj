@@ -3,17 +3,6 @@
 
 %initial_state(-GameState)
 %Returns the initial board that will be used to play the game
-debug_state(game_state([
-[0,0,2,2,2,2,2,2,2],
-[0,2,2,2,2,2,2,2,2],
-[2,2,0,0,0,0,0,0,0],
-[0,2,0,0,0,0,0,0,0],
-[0,0,0,0,0,0,0,0,0],
-[0,1,0,0,0,0,0,0,0],
-[0,1,0,0,0,0,0,0,0],
-[0,1,1,1,1,1,1,1,1],
-[0,1,1,1,1,1,1,1,1]], 2)).
-
 initial_state(
     game_state([
     [2, 2, 2, 2, 2, 2, 2, 2, 2],
@@ -27,7 +16,7 @@ initial_state(
     [1, 1, 1, 1, 1, 1, 1, 1, 1]
 ], 1)).
 
-% TODO: Remove
+% Used exclusively to test end-game conditions, not a real initial state
 % initial_state(
 %     game_state([
 %     [1, 1, 1, 0, 1, 1, 1, 1, 1],
@@ -67,23 +56,13 @@ game_over(game_state([
     [2, 2, 2, 2, 2, 2, 2, 2, 2]
 ],_), 2).
 
-% get_board(+GameState, -Board)
-% Returns the Board of the GameState
-get_board(game_state(Board, _), Board).
-
-% get_player(+GameState, -Player)
-% Returns the current Player of the GameState
-get_player(game_state(_, Player), Player).
 
 % decompose_position(+Position, -X, -Y)
 % Return the X Y of the given position
 decompose_position(position(X,Y), X, Y).
 
-% decompose_move(+Move, -Piece, - Destination)
-% Returns the relevant positions of the Move
-decompose_move(move(Piece, Destination), Piece, Destination).
-
 % get_board_position(+Board, +Position, -Value)
+% Get value of the given position in the board
 get_board_position(Board, Position, Value) :-
     decompose_position(Position, X, Y),
     length(Board, LenY),
@@ -98,10 +77,11 @@ get_board_position(Board, Position, Value) :-
     nth0(X, Row, Value).
 
 % valid_position(+Board, +Position)
+% Check if position is an valid destination (i.e it has value 0)
 valid_position(Board, Position) :- 
     get_board_position(Board, Position, 0).
 
-%neighbours(+Piece, -ListOfPositions)
+% neighbours(+Piece, -ListOfPositions)
 % Returns a list with the position of the neighbours of the given Piece
 neighbours(Piece, [P1,P2,P3,P4,P5,P6,P7,P8]) :-
     decompose_position(Piece, X, Y),
@@ -122,27 +102,12 @@ neighbours(Piece, [P1,P2,P3,P4,P5,P6,P7,P8]) :-
     P7 = position(XM2,YP1),
     P8 = position(XM2,YM1).
 
-% remove_invalid_positions(+Board, +Positions, -ValidPositions)
-% Filters the given Positions list, returning a list with valid positions
-% remove_invalid_positions(_, [], []).
-% 
-% remove_invalid_positions(Board, [H | Neighbours], [H | Aux]) :-
-%     valid_position(Board, H),
-%     remove_invalid_positions(Board, Neighbours, Aux).
-% 
-% remove_invalid_positions(Board, [_ | Neighbours], Aux) :-
-%     remove_invalid_positions(Board, Neighbours, Aux).
-    
-% valid_positions_for_piece(+Board, +Piece, -ListOfPositions)
-% Returns a list with valid position for the given Piece
-% valid_positions_for_piece(Board, Piece, ListOfPositions) :-
-%     neighbours(Piece, Neighbours),
-%     member(PossibleMove, Neighbours),
-%     remove_invalid_positions(Board, Neighbours, ListOfPositions).
-
+% not(+X)
 not(X):- X, !, fail.
 not(_X).
 
+% valid_position_for_piece(+GameState, +Piece, +Destination)
+% Check if the given Piece can be moved to the Destination position
 valid_position_for_piece(game_state(Board, Player), Piece, Destination) :-
     valid_position_for_piece_without_jump(game_state(Board, Player), Piece, Destination).
 
@@ -150,16 +115,23 @@ valid_position_for_piece(game_state(Board, Player), Piece, Destination) :-
     valid_position(Board, Destination),
     valid_position_with_jump(game_state(Board, Player), Piece, Destination, []).
 
+% valid_position_for_piece_without_jump(+GameState, +Piece, +Destination)
+% Check if the given Piece can be moved to the Destination position, without using the mechanic of jumping on another piece
 valid_position_for_piece_without_jump(game_state(Board, Player), Piece, Destination) :-
     valid_position(Board, Destination),
     neighbours(Piece, Neighbours),
     member(Destination, Neighbours).
 
-% Terminate the jumping sequence by moving onto a empty Destination
+
+% valid_position_with_jump(+GameState, +Piece, +Destination, +Visited)
+%  Check if the given Piece can be moved to the Destination position by jumping on intermediate pieces.
+
+% Terminate the jumping sequence by moving onto an empty Destination
 valid_position_with_jump(game_state(Board, Player), Piece, Destination, Visited) :-
     neighbours(Piece, Neighbours),
     member(Destination, Neighbours). % Check if destination is a neighbour of the last piece
 
+% Check if Destination can be reached by jumping on an intermediate piece that's neighboring the current piece
 valid_position_with_jump(game_state(Board, Player), Piece, Destination, Visited) :-
     neighbours(Piece, Neighbours),
     member(IntermediatePiece, Neighbours), % For each piece neighboring the current Piece
@@ -168,26 +140,23 @@ valid_position_with_jump(game_state(Board, Player), Piece, Destination, Visited)
     not(member(IntermediatePiece, Visited)), % Avoid infinite recursion
     valid_position_with_jump(game_state(Board, Player), IntermediatePiece, Destination, [IntermediatePiece|Visited]).
 
-isNotEmpty([_|_]).
 
-% valid_move(+GameState, ?Play)
-% Para cada Piece do current player:
-%   obter plays dessa peça
-%   concatenar ao resultado
+% valid_move(+GameState, ?Move)
 valid_move(game_state(Board, Player), move(Piece, Destination)) :-
     get_board_position(Board, Piece, Player),
     valid_position_for_piece(game_state(Board, Player), Piece, Destination).
 
+% valid_move_without_jump(+GameState, ?Move)
 valid_move_without_jump(game_state(Board, Player), move(Piece, Destination)) :-
     get_board_position(Board, Piece, Player),
     valid_position_for_piece_without_jump(game_state(Board, Player), Piece, Destination).
-
-%validate_play(game_state(Board, Player), play(Piece, Destination)) :-
 
 % switch_player(+OldPlayer, -NewPlayer).
 switch_player(1, 2).
 switch_player(2, 1).
 
+% change_value(+Board, +Position, +NewValue, -NewBoard)
+% Change the value of a board position, returning a new board
 change_value(Board, position(X, Y), NewValue, NewBoard) :-
     nth0(Y, Board, Row, R1),
     nth0(X, Row, _, R2),
@@ -196,26 +165,22 @@ change_value(Board, position(X, Y), NewValue, NewBoard) :-
 
 % move(+GameState, +Move, -NewGameState)
 move(game_state(Board, Player), move(Piece, Destination), game_state(NewBoard, NewPlayer)) :-
-    % validate play
-    valid_move(game_state(Board, Player), move(Piece, Destination)),
-    % update board (posiçaõ atual a 0, nova com nr do jogador)
-    % update Player (NewPlayer IS Player + 1 % 1 -> não usar matematica aqui)
-    change_value(Board, Piece, 0, B1),
-    change_value(B1, Destination, Player, NewBoard),
+    change_value(Board, Piece, 0, B1), % 'Pick up' the piece
+    change_value(B1, Destination, Player, NewBoard), % 'Place it' on the destination
     switch_player(Player, NewPlayer).
 
-%position_with_value(Value, X, Y) :-
-% goodbye world PLS ;-;
-% goodbye world pls
-
-%get_player_pieces_positions(Board, Player, ListOfPositions) :-
 
 % value(+GameState, -Value)
+% Evaluate board
 value(game_state(Board, Opponent), Value) :-
     switch_player(Opponent, Player), % Move auto-switches the player, but we want the value from the perspective of the player who just moved.
-    setof(Piece, get_board_position(Board, Piece, Player), Pieces),
+    setof(Piece, get_board_position(Board, Piece, Player), Pieces), % All player's pieces
     calculate_value(Pieces, Player, 0, Value).
 
+
+% piece_value(+Piece, +Player, -PieceValue)
+% Each piece's value is calculated by the distance to the opposite side,
+% the closer it is the lesser the value is. (AI will try to minimize the value)
 piece_value(Piece, 1, PieceValue) :-
     decompose_position(Piece, _, Row),
     PieceValue is Row.
@@ -224,6 +189,8 @@ piece_value(Piece, 2, PieceValue) :-
     decompose_position(Piece, _, Row),
     PieceValue is 8 - Row.
 
+% calculate_value(+PieceValues, +Player, +CurrentValue, -OutputValue)
+% Sum up all individual piece's value to obtain the GameState value
 calculate_value([], _, OutputValue, OutputValue).
 
 calculate_value([H | T], Player, CurrentValue, OutputValue) :-
