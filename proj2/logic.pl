@@ -160,9 +160,9 @@ not(_X).
 valid_position_with_jump(game_state(Board, Player), Piece, Destination, Visited) :-
     neighbours(Piece, Neighbours),
     member(IntermediatePiece, Neighbours), % For each piece neighboring the current Piece
-    not(member(IntermediatePiece, Visited)), % Avoid infinite recursion
     switch_player(Player, Opponent),
     get_board_position(Board, IntermediatePiece, Opponent), % IntermediatePiece is an oppponent's piece
+    not(member(IntermediatePiece, Visited)), % Avoid infinite recursion
     valid_position_with_jump(game_state(Board, Player), IntermediatePiece, Destination, [IntermediatePiece|Visited]).
 
 isNotEmpty([_|_]).
@@ -204,7 +204,8 @@ move(game_state(Board, Player), move(Piece, Destination), game_state(NewBoard, N
 %get_player_pieces_positions(Board, Player, ListOfPositions) :-
 
 % value(+GameState, -Value)
-value(game_state(Board, Player), Value) :-
+value(game_state(Board, Opponent), Value) :-
+    switch_player(Opponent, Player), % Move auto-switches the player, but we want the value from the perspective of the player who just moved.
     setof(Piece, get_board_position(Board, Piece, Player), Pieces),
     calculate_value(Pieces, Player, 0, Value).
 

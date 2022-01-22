@@ -45,29 +45,11 @@ valid_moves(GameState, Moves) :-
 choose_move(1, _GameState, Moves, Move):-
     random_select(Move, Moves, _Rest).
 
-%choose_move(2, GameState, Moves, Move):-
-%    setof(Value-Mv, NewState^( member(Mv, Moves),
-%                                move(GameState, Mv, NewState),
-%                                value(NewState, Value) 
-%                            ), Results),
-%    keyclumps(Results, Clumps),
-%    head(Clumps, BestPossibleMoves),  % Get all the moves with minimum key (Value)
-%    random_select(BestValue-Move, BestPossibleMoves, _Rest), % From all the best moves (that yield the same value), choose a random one.
-%    write(BestValue),
-%    write('\n').
-
 choose_move(2, GameState, Moves, Move):-
     setof(Value-Mv, NewState^( member(Mv, Moves),
                                 move(GameState, Mv, NewState),
                                 value(NewState, Value) 
                             ), Results),
-    write(Results),
-    head(Results, _V-Move).
-                        
-
-mvvalue(GameState, Moves, Move, Value) :-
-    member(Move, Moves),
-    move(GameState, Move, NewState),
-    display_game(GameState),
-    display_game(NewState),
-    value(NewState, Value).
+    keyclumps(Results, Clumps),
+    head(Clumps, BestPossibleMoves),  % Get all the moves with minimum key (Value)
+    random_select(BestValue-Move, BestPossibleMoves, _Rest). % From all the best moves (that yield the same value), choose a random one.
