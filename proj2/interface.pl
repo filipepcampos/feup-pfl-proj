@@ -30,24 +30,32 @@ display_options :-
     write('                 4. Computer vs Computer\n\n'),
     write('                 0. Exit\n').
 
-% get_option(-Option)
-% Get menu option from stdin
-get_option(Option) :-
-    write('Write you option:\n > '),
+
+% get_number(-Number)
+% Get a number (0 to 9) from stdin
+get_number(Number) :-
+    write(' > '),
     get_code(CharCode),
     CharCode \= 10,
     peek_code(N),  % assure \n
     skip_line,
     !,
     N == 10,
-    Option is CharCode - 48,
+    Number is CharCode - 48,
+    between(0, 9, Number).
+
+% get_option(-Option)
+% Get menu option from stdin
+get_option(Option) :-
+    write('Write your option:\n'),
+    get_number(Option),
     between(0, 4, Option).
 
 % parse_option(+Option, -PlayerType1, -PlayerType2)
 parse_option(1, human, human).
-parse_option(2, human, computer-2).
-parse_option(3, computer-2, human).
-parse_option(4, computer-2, computer-2).
+parse_option(2, human, computer-Level) :- get_ai_level(Level).
+parse_option(3, computer-Level, human) :- get_ai_level(Level).
+parse_option(4, computer-Level, computer-Level) :- get_ai_level(Level).
 
 % get_move(-Move)
 % Get a move from stdin
@@ -71,6 +79,13 @@ get_position(Column-Row) :-
     skip_line,
     Row is RowCode - 49, % -48 - 1
     between(0, 8, Row).
+
+% get_ai_level(-AILevel)
+get_ai_level(AILevel) :-
+    repeat,
+    write('AI Level (1,2 or 3):\n'),
+    get_number(AILevel),
+    between(1, 3, AILevel).
 
 % write_move(+Move)
 write_move(move(position(PieceColumn, PieceRow), position(DestinationColumn, DestinationRow))) :-
