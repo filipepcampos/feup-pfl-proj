@@ -43,7 +43,7 @@ get_option(Option) :-
 % parse_option(+Option, -PlayerType1, -PlayerType2)
 parse_option(1, human, human).
 parse_option(2, human, computer-2).
-parse_option(3, computer-1, human).
+parse_option(3, computer-2, human).
 parse_option(4, computer-2, computer-2).
 
 get_move(move(position(PieceColumn, PieceRow), position(DestinationColumn, DestinationRow))) :-

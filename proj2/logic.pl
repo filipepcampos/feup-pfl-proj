@@ -140,22 +140,25 @@ neighbours(Piece, [P1,P2,P3,P4,P5,P6,P7,P8]) :-
 %     member(PossibleMove, Neighbours),
 %     remove_invalid_positions(Board, Neighbours, ListOfPositions).
 
+not(X):- X, !, fail.
+not(_X).
+
 valid_position_for_piece(game_state(Board, Player), Piece, Destination) :-
-    valid_position(Board, Destination),
-    neighbours(Piece, Neighbours),
-    member(Destination, Neighbours).
+    valid_position_for_piece_without_jump(game_state(Board, Player), Piece, Destination).
 
 valid_position_for_piece(game_state(Board, Player), Piece, Destination) :-
     valid_position(Board, Destination),
     valid_position_with_jump(game_state(Board, Player), Piece, Destination, []).
 
+valid_position_for_piece_without_jump(game_state(Board, Player), Piece, Destination) :-
+    valid_position(Board, Destination),
+    neighbours(Piece, Neighbours),
+    member(Destination, Neighbours).
+
 % Terminate the jumping sequence by moving onto a empty Destination
 valid_position_with_jump(game_state(Board, Player), Piece, Destination, Visited) :-
     neighbours(Piece, Neighbours),
     member(Destination, Neighbours). % Check if destination is a neighbour of the last piece
-
-not(X):- X, !, fail.
-not(_X).
 
 valid_position_with_jump(game_state(Board, Player), Piece, Destination, Visited) :-
     neighbours(Piece, Neighbours),
@@ -167,13 +170,17 @@ valid_position_with_jump(game_state(Board, Player), Piece, Destination, Visited)
 
 isNotEmpty([_|_]).
 
-% valid_play(+GameState, ?Play)
+% valid_move(+GameState, ?Play)
 % Para cada Piece do current player:
 %   obter plays dessa peça
 %   concatenar ao resultado
 valid_move(game_state(Board, Player), move(Piece, Destination)) :-
     get_board_position(Board, Piece, Player),
     valid_position_for_piece(game_state(Board, Player), Piece, Destination).
+
+valid_move_without_jump(game_state(Board, Player), move(Piece, Destination)) :-
+    get_board_position(Board, Piece, Player),
+    valid_position_for_piece_without_jump(game_state(Board, Player), Piece, Destination).
 
 %validate_play(game_state(Board, Player), play(Piece, Destination)) :-
 
