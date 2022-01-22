@@ -1,11 +1,12 @@
 :-use_module(library(between)).
 
-display_menu :-
+display_menu(PlayerType1, PlayerType2) :-
     repeat,
     display_title,
     display_authors,
     display_options,
-    get_option(Option).
+    get_option(Option),
+    parse_option(Option, PlayerType1, PlayerType2).
 
 display_title :-
     write(' _ __ ___ _ __  _ __   __ _  __ _ _ __ __| | ___ _ __\n'),
@@ -38,8 +39,21 @@ get_option(Option) :-
     Option is CharCode - 48,
     between(0, 4, Option).
 
-get_move(Column-Row) :- 
-    write(' > '),
+% parse_option(+Option, -PlayerType1, -PlayerType2)
+parse_option(1, human, human).
+parse_option(2, human, computer-1).
+parse_option(3, computer-1, human).
+parse_option(4, computer-1, computer-1).
+
+get_move(move(position(PieceColumn, PieceRow), position(DestinationColumn, DestinationRow))) :-
+    write('Choose Move:\n'),
+    write('  Piece:\n'),
+    get_position(PieceColumn-PieceRow),
+    write('  Destination:\n'),
+    get_position(DestinationColumn-DestinationRow).
+
+get_position(Column-Row) :- 
+    write('  > '),
     get_code(ColumnCode),
     ColumnCode \= 10,
     Column is ColumnCode - 97,
@@ -50,7 +64,6 @@ get_move(Column-Row) :-
     Row is RowCode - 49, % -48 - 1
     between(0, 8, Row).
 
-% TODO: Remove this later -> initial_state(S), display_game(S).
 display_game(game_state(Board, Player)) :-
     display_header,
     display_board(Board, 1),
@@ -79,3 +92,10 @@ display_player(Player) :-
     write('\nPlayer '),
     write(Player),
     write('\'s turn.\n').
+
+% congratulate(+Winner)
+congratulate(Winner) :-
+    write('Congratulations, you\'re smarter than an idiot!\n'),
+    write('This message is for you,'),
+    write(Winner),
+    write('.\n').

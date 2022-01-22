@@ -3,22 +3,35 @@
 
 % init_state(-GameState)
 % Returns the initial board that will be used to play the game
+% initial_state(
+%     game_state([
+%     [2, 2, 2, 2, 2, 2, 2, 2, 2],
+%     [2, 2, 2, 2, 2, 2, 2, 2, 2],
+%     [0, 0, 0, 0, 0, 0, 0, 0, 0],
+%     [0, 0, 0, 0, 0, 0, 0, 0, 0],
+%     [0, 0, 0, 0, 0, 0, 0, 0, 0],
+%     [0, 0, 0, 0, 0, 0, 0, 0, 0],
+%     [0, 0, 0, 0, 0, 0, 0, 0, 0],
+%     [1, 1, 1, 1, 1, 1, 1, 1, 1],
+%     [1, 1, 1, 1, 1, 1, 1, 1, 1]
+% ], 1)).
+
 initial_state(
     game_state([
-    [2, 2, 2, 2, 2, 2, 2, 2, 2],
-    [2, 2, 2, 2, 2, 2, 2, 2, 2],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [1, 1, 1, 0, 1, 1, 1, 1, 1],
     [1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1]
+    [0, 0, 0, 0, 1, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 2, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [2, 2, 2, 2, 2, 2, 2, 0, 2],
+    [2, 2, 2, 2, 2, 2, 2, 2, 2]
 ], 1)).
 
 
 % game_over(+GameState, -Winner)
-game_over([
+game_over(game_state([
     [1, 1, 1, 1, 1, 1, 1, 1, 1],
     [1, 1, 1, 1, 1, 1, 1, 1, 1],
     [_, _, _, _, _, _, _, _, _],
@@ -28,9 +41,9 @@ game_over([
     [_, _, _, _, _, _, _, _, _],
     [_, _, _, _, _, _, _, _, _],
     [_, _, _, _, _, _, _, _, _]
-], 1).
+],_), 1).
 
-game_over([
+game_over(game_state([
     [_, _, _, _, _, _, _, _, _],
     [_, _, _, _, _, _, _, _, _],
     [_, _, _, _, _, _, _, _, _],
@@ -40,7 +53,7 @@ game_over([
     [_, _, _, _, _, _, _, _, _],
     [2, 2, 2, 2, 2, 2, 2, 2, 2],
     [2, 2, 2, 2, 2, 2, 2, 2, 2]
-], 2).
+],_), 2).
 
 % get_board(+GameState, -Board)
 % Returns the Board of the GameState
@@ -54,9 +67,9 @@ get_player(game_state(_, Player), Player).
 % Return the X Y of the given position
 decompose_position(position(X,Y), X, Y).
 
-% decompose_play(+Move, -Piece, - Destination)
+% decompose_move(+Move, -Piece, - Destination)
 % Returns the relevant positions of the Move
-decompose_play(play(Piece, Destination), Piece, Destination).
+decompose_move(move(Piece, Destination), Piece, Destination).
 
 % get_board_position(+Board, +Position, -Value)
 get_board_position(Board, Position, Value) :-
@@ -116,10 +129,10 @@ neighbours(Piece, [P1,P2,P3,P4,P5,P6,P7,P8]) :-
 %     member(PossibleMove, Neighbours),
 %     remove_invalid_positions(Board, Neighbours, ListOfPositions).
 
-valid_position_for_piece(Board, Piece, Move) :-
+valid_position_for_piece(Board, Piece, Destination) :-
     neighbours(Piece, Neighbours),
-    member(Move, Neighbours),
-    valid_position(Board, Move).
+    member(Destination, Neighbours),
+    valid_position(Board, Destination).
 
 isNotEmpty([_|_]).
 
@@ -127,9 +140,9 @@ isNotEmpty([_|_]).
 % Para cada Piece do current player:
 %   obter plays dessa peça
 %   concatenar ao resultado
-valid_play(game_state(Board, Player), play(Position, Move)) :-
-    get_board_position(Board, Position, Player),
-    valid_position_for_piece(Board, Position, Move).
+valid_move(game_state(Board, Player), move(Piece, Destination)) :-
+    get_board_position(Board, Piece, Player),
+    valid_position_for_piece(Board, Piece, Destination).
 
 %validate_play(game_state(Board, Player), play(Piece, Destination)) :-
 
@@ -144,9 +157,9 @@ change_value(Board, position(X, Y), NewValue, NewBoard) :-
     nth0(Y, NewBoard, NewRow, R1).
 
 % move(+GameState, +Move, -NewGameState)
-move(game_state(Board, Player), play(Piece, Destination), game_state(NewBoard, NewPlayer)) :-
+move(game_state(Board, Player), move(Piece, Destination), game_state(NewBoard, NewPlayer)) :-
     % validate play
-    valid_play(game_state(Board, Player), play(Piece, Destination)),
+    valid_move(game_state(Board, Player), move(Piece, Destination)),
     % update board (posiçaõ atual a 0, nova com nr do jogador)
     % update Player (NewPlayer IS Player + 1 % 1 -> não usar matematica aqui)
     change_value(Board, Piece, 0, B1),
